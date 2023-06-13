@@ -39,6 +39,8 @@ export class MyStrategy extends Strategy {
 
   protected doMove(state: GameState): MoveCommand {
     this.setupPieceInfo(state);
+    this.processLastMove(state);
+    this.processBattleResult(state);
 
     // Get a map of all cells by coordinate.
     const cellsByCoord: Record<string, Cell> = {};
@@ -60,21 +62,7 @@ export class MyStrategy extends Strategy {
 
   protected processOpponentMove(state: GameState): void {
     this.setupPieceInfo(state);
-
-    if (!state.LastMove) {
-      return;
-    }
-
-    const info = this.pieceInfos[coordinateToString(state.LastMove.From)];
-
-    this.pieceInfos[coordinateToString(state.LastMove.To)] = info;
-    delete this.pieceInfos[coordinateToString(state.LastMove.From)];
-
-    info.hasMoved = true;
-
-    if (distance(state.LastMove.From, state.LastMove.To) > 1) {
-      info.rank = 'Scout';
-    }
+    this.processBattleResult(state);
   }
 
   private getMovesForCell(
@@ -153,6 +141,23 @@ export class MyStrategy extends Strategy {
     }
     if (battle.Winner === battle.Defender.Player) {
       return battle.Defender;
+    }
+  }
+
+  private processLastMove(state: GameState) {
+    if (!state.LastMove) {
+      return;
+    }
+
+    const info = this.pieceInfos[coordinateToString(state.LastMove.From)];
+
+    this.pieceInfos[coordinateToString(state.LastMove.To)] = info;
+    delete this.pieceInfos[coordinateToString(state.LastMove.From)];
+
+    info.hasMoved = true;
+
+    if (distance(state.LastMove.From, state.LastMove.To) > 1) {
+      info.rank = 'Scout';
     }
   }
 }
