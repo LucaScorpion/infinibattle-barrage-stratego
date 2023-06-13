@@ -1,0 +1,12 @@
+# IDEs
+.idea/
+
+# Node
+node_modules/
+
+# Build output
+build/
+*.zip
+
+# Bot API key
+apiKey
