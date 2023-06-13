@@ -13,7 +13,7 @@ import { BattleResult, RankAndPlayer } from './model/BattleResult';
 
 export class MyStrategy extends Strategy {
   private availablePieces: Rank[] = [];
-  private readonly pieceInfos: Record<string, PieceInfo> = {};
+  private readonly opponentPieceInfo: Record<string, PieceInfo> = {};
 
   protected doSetupBoard(init: GameInit): SetupBoardCommand {
     this.availablePieces = init.AvailablePieces;
@@ -119,7 +119,8 @@ export class MyStrategy extends Strategy {
     state.Board.filter(
       (c) => c.Owner != undefined && c.Owner !== this.me
     ).forEach((c) => {
-      this.pieceInfos[coordinateToString(c.Coordinate)] = new PieceInfo();
+      this.opponentPieceInfo[coordinateToString(c.Coordinate)] =
+        new PieceInfo();
     });
   }
 
@@ -130,8 +131,9 @@ export class MyStrategy extends Strategy {
 
     const winner = this.getWinner(state.BattleResult);
     if (winner && winner.Player !== this.me) {
-      this.pieceInfos[coordinateToString(state.BattleResult.Position)].rank =
-        winner.Rank;
+      this.opponentPieceInfo[
+        coordinateToString(state.BattleResult.Position)
+      ].rank = winner.Rank;
     }
   }
 
@@ -149,10 +151,11 @@ export class MyStrategy extends Strategy {
       return;
     }
 
-    const info = this.pieceInfos[coordinateToString(state.LastMove.From)];
+    const info =
+      this.opponentPieceInfo[coordinateToString(state.LastMove.From)];
 
-    this.pieceInfos[coordinateToString(state.LastMove.To)] = info;
-    delete this.pieceInfos[coordinateToString(state.LastMove.From)];
+    this.opponentPieceInfo[coordinateToString(state.LastMove.To)] = info;
+    delete this.opponentPieceInfo[coordinateToString(state.LastMove.From)];
 
     info.hasMoved = true;
 
