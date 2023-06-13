@@ -1,9 +1,9 @@
 import readline from 'readline';
 import { GameInit } from './model/GameInit';
-import { RandomStrategy } from './RandomStrategy';
 import { GameState } from './model/GameState';
+import { MyStrategy } from './MyStrategy';
 
-const strategy = new RandomStrategy();
+const strategy = new MyStrategy();
 
 const rl = readline.createInterface({
   input: process.stdin,
