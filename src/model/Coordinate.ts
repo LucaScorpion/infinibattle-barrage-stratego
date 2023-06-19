@@ -3,7 +3,7 @@ export interface Coordinate {
   Y: number;
 }
 
-export function coordinateToString(c: Coordinate): string {
+export function coordToString(c: Coordinate): string {
   return `${c.X},${c.Y}`;
 }
 

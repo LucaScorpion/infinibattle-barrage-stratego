@@ -5,4 +5,6 @@ export class PieceInfo {
   public rank?: Rank;
 
   public hasMoved = false;
+
+  public flagLikelihood = 0;
 }
