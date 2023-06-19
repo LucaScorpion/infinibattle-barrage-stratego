@@ -1,15 +1,19 @@
 import { Strategy } from './Strategy';
-import { PLAYER_RED } from './model/Player';
-import { SetupBoardCommand } from './model/commands/SetupBoardCommand';
+import { PLAYER_BLUE } from './model/Player';
+import {
+  RankAndPosition,
+  SetupBoardCommand,
+} from './model/commands/SetupBoardCommand';
 import { GameInit } from './model/GameInit';
 import { GameState } from './model/GameState';
 import { MoveCommand } from './model/commands/MoveCommand';
 import { Cell } from './model/Cell';
-import { addCoordinates, coordinateToString } from './model/Coordinate';
+import { addCoordinates, coordinateToString, flip } from './model/Coordinate';
 import { PieceInfo } from './PieceInfo';
 import { distance } from './distance';
 import { Rank } from './model/Rank';
-import { BattleResult, RankAndPlayer } from './model/BattleResult';
+import { getWinner } from './battleResult';
+import { setupOne } from './setupOne';
 
 export class MyStrategy extends Strategy {
   private availablePieces: Rank[] = [];
@@ -18,23 +22,16 @@ export class MyStrategy extends Strategy {
   protected doSetupBoard(init: GameInit): SetupBoardCommand {
     this.availablePieces = init.AvailablePieces;
 
-    const row = init.You === PLAYER_RED ? 0 : 6;
+    const setup = setupOne;
 
-    const result: SetupBoardCommand = {
-      Pieces: [],
-    };
+    // If we are blue, flip the setup coordinates.
+    if (init.You === PLAYER_BLUE) {
+      setup.Pieces = setup.Pieces.map(
+        (p): RankAndPosition => ({ ...p, Position: flip(p.Position) })
+      );
+    }
 
-    init.AvailablePieces.forEach((p, i) => {
-      result.Pieces.push({
-        Rank: p,
-        Position: {
-          X: i,
-          Y: row + Math.floor(Math.random() * 4),
-        },
-      });
-    });
-
-    return result;
+    return setup;
   }
 
   protected doMove(state: GameState): MoveCommand {
@@ -129,20 +126,14 @@ export class MyStrategy extends Strategy {
       return;
     }
 
-    const winner = this.getWinner(state.BattleResult);
+    const winner = getWinner(state.BattleResult);
+
+    // Check if we lost.
     if (winner && winner.Player !== this.me) {
+      // Move the opponent piece info.
       this.opponentPieceInfo[
         coordinateToString(state.BattleResult.Position)
       ].rank = winner.Rank;
-    }
-  }
-
-  private getWinner(battle: BattleResult): RankAndPlayer | undefined {
-    if (battle.Winner === battle.Attacker.Player) {
-      return battle.Attacker;
-    }
-    if (battle.Winner === battle.Defender.Player) {
-      return battle.Defender;
     }
   }
 
@@ -154,11 +145,13 @@ export class MyStrategy extends Strategy {
     const info =
       this.opponentPieceInfo[coordinateToString(state.LastMove.From)];
 
+    // Move the opponent piece in the piece info.
     this.opponentPieceInfo[coordinateToString(state.LastMove.To)] = info;
     delete this.opponentPieceInfo[coordinateToString(state.LastMove.From)];
 
     info.hasMoved = true;
 
+    // If a piece moved more than 1, it's a scout.
     if (distance(state.LastMove.From, state.LastMove.To) > 1) {
       info.rank = 'Scout';
     }

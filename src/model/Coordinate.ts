@@ -13,3 +13,10 @@ export function addCoordinates(a: Coordinate, b: Coordinate): Coordinate {
     Y: a.Y + b.Y,
   };
 }
+
+export function flip(c: Coordinate): Coordinate {
+  return {
+    X: c.X,
+    Y: Math.abs(9 - c.Y),
+  };
+}
