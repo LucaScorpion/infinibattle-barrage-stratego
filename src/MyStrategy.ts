@@ -63,6 +63,9 @@ export class MyStrategy extends Strategy {
     // Get all cells with allied pieces.
     const myCells = state.Board.filter((c) => c.Owner === this.me);
 
+    // TODO: Find known winnable fights, prioritise those.
+
+    // Find the cell most likely to be the flag.
     const target = Object.entries(this.opponentPieceInfo).sort(
       (a, b) => b[1].flagLikelihood - a[1].flagLikelihood
     )[0];

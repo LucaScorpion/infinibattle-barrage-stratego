@@ -61,6 +61,8 @@ export function findPath(
     parent = parents[coordToString(path[path.length - 1])];
   }
 
+  // TODO: Cut out longer sections that the scout can cover.
+
   return path.reverse();
 }
 
