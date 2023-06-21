@@ -4,11 +4,11 @@ export const setupOne: SetupBoardCommand = {
   Pieces: [
     {
       Rank: 'Marshal',
-      Position: { X: 3, Y: 1 },
+      Position: { X: 2, Y: 2 },
     },
     {
       Rank: 'General',
-      Position: { X: 2, Y: 2 },
+      Position: { X: 3, Y: 1 },
     },
     {
       Rank: 'Miner',
@@ -24,7 +24,7 @@ export const setupOne: SetupBoardCommand = {
     },
     {
       Rank: 'Scout',
-      Position: { X: 1, Y: 0 },
+      Position: { X: 0, Y: 1 },
     },
     {
       Rank: 'Bomb',
