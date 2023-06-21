@@ -1,12 +1,16 @@
-import { GameState, findCellByCoord } from './model/GameState';
 import { PieceInfo } from './PieceInfo';
 import { DIRECTIONS } from './directions';
-import { addCoordinates, stringToCoord } from './model/Coordinate';
+import {
+  addCoordinates,
+  coordToString,
+  stringToCoord,
+} from './model/Coordinate';
+import { Cell } from './model/Cell';
 
 export function calcFlagLikelihood(
   coordStr: string,
   info: PieceInfo,
-  state: GameState,
+  cells: Record<string, Cell>,
   me: number
 ): number {
   if (info.rank || info.hasMoved) {
@@ -23,7 +27,7 @@ export function calcFlagLikelihood(
 
     while (true) {
       checkCoord = addCoordinates(checkCoord, delta);
-      const cell = findCellByCoord(state, coord);
+      const cell = cells[coordToString(checkCoord)];
 
       // If we are out of bounds, return the maximum value.
       if (!cell) {

@@ -28,6 +28,7 @@ import {
 import { MoveAndRank } from './MoveAndRank';
 import { calcFlagLikelihood } from './calcFlagLikelihood';
 import { DIRECTIONS } from './directions';
+import { findPath } from './findPath';
 
 export class MyStrategy extends Strategy {
   private availablePieces: Rank[] = [];
@@ -52,11 +53,12 @@ export class MyStrategy extends Strategy {
     this.setupPieceInfo(state);
     this.processOpponentLastMove(state);
     this.processBattleResult(state);
-    this.calcFlagLikelihoods(state);
 
     // Get a map of all cells by coordinate.
     const cellsByCoord: Record<string, Cell> = {};
     state.Board.forEach((c) => (cellsByCoord[coordToString(c.Coordinate)] = c));
+
+    this.calcFlagLikelihoods(cellsByCoord);
 
     // Get all cells with allied pieces.
     const myCells = state.Board.filter((c) => c.Owner === this.me);
@@ -66,7 +68,28 @@ export class MyStrategy extends Strategy {
     )[0];
     const targetCoord = stringToCoord(target[0]);
 
-    // TODO: Move piece to target coord.
+    // TODO: Get right piece to move.
+    const movePiece = myCells.find(
+      (c) => c.Rank !== 'Bomb' && c.Rank !== 'Flag'
+    ) as Cell;
+    const from = movePiece.Coordinate;
+
+    const path = findPath(
+      from,
+      targetCoord,
+      cellsByCoord,
+      this.me,
+      movePiece.Rank as Rank
+    );
+
+    if (path.length === 0) {
+      // TODO: Try the next piece when this happens.
+      throw new Error(
+        `Could not find a path from ${coordToString(from)} to ${target[0]}`
+      );
+    }
+
+    return { From: from, To: path[0] };
 
     // Previous logic:
     /*
@@ -179,10 +202,10 @@ export class MyStrategy extends Strategy {
     }
   }
 
-  private calcFlagLikelihoods(state: GameState): void {
+  private calcFlagLikelihoods(cells: Record<string, Cell>): void {
     Object.entries(this.opponentPieceInfo).forEach(
       ([coord, i]) =>
-        (i.flagLikelihood = calcFlagLikelihood(coord, i, state, this.me))
+        (i.flagLikelihood = calcFlagLikelihood(coord, i, cells, this.me))
     );
   }
 
