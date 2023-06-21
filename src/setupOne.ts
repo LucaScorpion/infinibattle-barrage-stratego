@@ -15,7 +15,7 @@ export const setupOne: SetupBoardCommand = {
       Position: { X: 5, Y: 3 },
     },
     {
-      Rank: 'Scout',
+      Rank: 'Spy',
       Position: { X: 3, Y: 0 },
     },
     {
@@ -23,7 +23,7 @@ export const setupOne: SetupBoardCommand = {
       Position: { X: 8, Y: 3 },
     },
     {
-      Rank: 'Spy',
+      Rank: 'Scout',
       Position: { X: 1, Y: 0 },
     },
     {
