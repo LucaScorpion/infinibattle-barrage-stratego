@@ -7,6 +7,14 @@ export function coordToString(c: Coordinate): string {
   return `${c.X},${c.Y}`;
 }
 
+export function stringToCoord(s: string): Coordinate {
+  const [xs, ys] = s.split(',');
+  return {
+    X: parseInt(xs, 10),
+    Y: parseInt(ys, 10),
+  };
+}
+
 export function addCoordinates(a: Coordinate, b: Coordinate): Coordinate {
   return {
     X: a.X + b.X,

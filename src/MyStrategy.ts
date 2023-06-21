@@ -8,7 +8,12 @@ import { GameInit } from './model/GameInit';
 import { GameState } from './model/GameState';
 import { MoveCommand } from './model/commands/MoveCommand';
 import { Cell } from './model/Cell';
-import { addCoordinates, coordToString, flip } from './model/Coordinate';
+import {
+  addCoordinates,
+  coordToString,
+  flip,
+  stringToCoord,
+} from './model/Coordinate';
 import { PieceInfo } from './PieceInfo';
 import { distance } from './distance';
 import { Rank } from './model/Rank';
@@ -21,6 +26,8 @@ import {
   WINNING_SCORE,
 } from './MoveWithScore';
 import { MoveAndRank } from './MoveAndRank';
+import { calcFlagLikelihood } from './calcFlagLikelihood';
+import { DIRECTIONS } from './directions';
 
 export class MyStrategy extends Strategy {
   private availablePieces: Rank[] = [];
@@ -43,8 +50,9 @@ export class MyStrategy extends Strategy {
 
   protected doMove(state: GameState): MoveCommand {
     this.setupPieceInfo(state);
-    this.processLastMove(state);
+    this.processOpponentLastMove(state);
     this.processBattleResult(state);
+    this.calcFlagLikelihoods(state);
 
     // Get a map of all cells by coordinate.
     const cellsByCoord: Record<string, Cell> = {};
@@ -53,6 +61,15 @@ export class MyStrategy extends Strategy {
     // Get all cells with allied pieces.
     const myCells = state.Board.filter((c) => c.Owner === this.me);
 
+    const target = Object.entries(this.opponentPieceInfo).sort(
+      (a, b) => b[1].flagLikelihood - a[1].flagLikelihood
+    )[0];
+    const targetCoord = stringToCoord(target[0]);
+
+    // TODO: Move piece to target coord.
+
+    // Previous logic:
+    /*
     // Get all possible moves for each piece, sorted by score.
     const moves = myCells
       .flatMap((c) => this.getMovesForCell(cellsByCoord, c))
@@ -60,6 +77,7 @@ export class MyStrategy extends Strategy {
       .sort((a, b) => b.score - a.score);
 
     return moves[0].move;
+     */
   }
 
   protected processOpponentMove(state: GameState): void {
@@ -77,14 +95,7 @@ export class MyStrategy extends Strategy {
 
     const result: MoveCommand[] = [];
 
-    const deltas = [
-      { X: 1, Y: 0 },
-      { X: -1, Y: 0 },
-      { X: 0, Y: 1 },
-      { X: 0, Y: -1 },
-    ];
-
-    for (const delta of deltas) {
+    for (const delta of DIRECTIONS) {
       let target = cell.Coordinate;
 
       let steps = 0;
@@ -168,7 +179,14 @@ export class MyStrategy extends Strategy {
     }
   }
 
-  private processLastMove(state: GameState) {
+  private calcFlagLikelihoods(state: GameState): void {
+    Object.entries(this.opponentPieceInfo).forEach(
+      ([coord, i]) =>
+        (i.flagLikelihood = calcFlagLikelihood(coord, i, state, this.me))
+    );
+  }
+
+  private processOpponentLastMove(state: GameState) {
     if (!state.LastMove) {
       return;
     }
