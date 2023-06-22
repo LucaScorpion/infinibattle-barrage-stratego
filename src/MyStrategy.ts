@@ -14,18 +14,12 @@ import {
   flip,
   stringToCoord,
 } from './model/Coordinate';
-import { PieceInfo } from './PieceInfo';
+import { isGuaranteedWin, PieceInfo } from './PieceInfo';
 import { distance } from './distance';
 import { canMove, Rank } from './model/Rank';
-import { getOpponentRank, getWinner, weWin } from './battleResult';
+import { getOpponentRank, getWinner } from './battleResult';
 import { setupOne } from './setupOne';
-import {
-  BATTLE_LOSE_SCORE,
-  BATTLE_WIN_SCORE,
-  MoveWithScore,
-  WINNING_SCORE,
-} from './MoveWithScore';
-import { MoveAndRank } from './MoveAndRank';
+import { ATTACK_ORDER, MoveAndRank } from './MoveAndRank';
 import { calcFlagLikelihood } from './calcFlagLikelihood';
 import { DIRECTIONS } from './directions';
 import { findPath } from './findPath';
@@ -106,7 +100,20 @@ export class MyStrategy extends Strategy {
       this.getMovesForCell(cellsByCoord, c)
     );
 
-    // TODO: Find known winnable fights, prioritise those.
+    // Find all moves which attack a piece, sorted by which piece we'd want to attack first.
+    const attackMoves = allMoves
+      .filter((m) => {
+        const opponent = this.opponentPieceInfo[coordToString(m.move.To)];
+        return isGuaranteedWin(m.rank, opponent);
+      })
+      .sort(
+        (a, b) => ATTACK_ORDER.indexOf(a.rank) - ATTACK_ORDER.indexOf(b.rank)
+      );
+
+    // If we have a known winnable fight, go!
+    if (attackMoves.length) {
+      return attackMoves[0].move;
+    }
 
     // If we know the flag location, go for it.
     let target = Object.entries(this.opponentPieceInfo).find(
@@ -147,17 +154,6 @@ export class MyStrategy extends Strategy {
     }
 
     return { From: from, To: path[0] };
-
-    // Previous logic:
-    /*
-    // Get all possible moves for each piece, sorted by score.
-    const moves = myCells
-      .flatMap((c) => this.getMovesForCell(cellsByCoord, c))
-      .map((m) => this.scoreMove(m))
-      .sort((a, b) => b.score - a.score);
-
-    return moves[0].move;
-     */
   }
 
   protected processOpponentMove(state: GameState): void {
@@ -204,32 +200,6 @@ export class MyStrategy extends Strategy {
     return result.map(
       (move): MoveAndRank => ({ move, rank: cell.Rank as Rank })
     );
-  }
-
-  private scoreMove(m: MoveAndRank): MoveWithScore {
-    const move = m.move;
-    const rank = m.rank;
-    const opponentPiece = this.opponentPieceInfo[coordToString(move.To)];
-
-    // TODO: Determine flag likelihood.
-    if (opponentPiece && opponentPiece.flagLikelihood >= 80) {
-      return { move, score: WINNING_SCORE };
-    }
-
-    // If it is a known rank, check if we can win.
-    if (opponentPiece?.rank && opponentPiece.rank !== '?') {
-      return {
-        move,
-        score: weWin(rank, opponentPiece.rank)
-          ? BATTLE_WIN_SCORE
-          : BATTLE_LOSE_SCORE,
-      };
-    }
-
-    return {
-      move,
-      score: 0,
-    };
   }
 
   private setupPieceInfo(state: GameState): void {
