@@ -90,7 +90,7 @@ export class MyStrategy extends Strategy {
     // Get all unknown, unmoved opponent pieces.
     const unknownUnmovedOpponentPieces = Object.values(this.opponentPieceInfo)
       .filter((i) => !i.hasMoved)
-      .filter((i) => !!i.rank);
+      .filter((i) => !i.rank);
 
     if (unknownUnmovedOpponentPieces.length === 1) {
       // If there is 1 unknown, unmoved piece left, that must be the flag.
@@ -100,6 +100,11 @@ export class MyStrategy extends Strategy {
       unknownUnmovedOpponentPieces[0].possibleRanks = ['Flag', 'Bomb'];
       unknownUnmovedOpponentPieces[1].possibleRanks = ['Flag', 'Bomb'];
     }
+
+    // Get all possible moves.
+    const allMoves = myCells.flatMap((c) =>
+      this.getMovesForCell(cellsByCoord, c)
+    );
 
     // TODO: Find known winnable fights, prioritise those.
 
@@ -164,7 +169,7 @@ export class MyStrategy extends Strategy {
     cellsByCoord: Record<string, Cell>,
     cell: Cell
   ): MoveAndRank[] {
-    if (cell.Rank === 'Flag' || cell.Rank === 'Bomb') {
+    if (!canMove(cell.Rank as Rank)) {
       return [];
     }
 
