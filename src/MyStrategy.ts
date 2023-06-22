@@ -104,7 +104,7 @@ export class MyStrategy extends Strategy {
     const attackMoves = allMoves
       .filter((m) => {
         const opponent = this.opponentPieceInfo[coordToString(m.move.To)];
-        return isGuaranteedWin(m.rank, opponent);
+        return opponent && isGuaranteedWin(m.rank, opponent);
       })
       .sort(
         (a, b) => ATTACK_ORDER.indexOf(a.rank) - ATTACK_ORDER.indexOf(b.rank)
