@@ -1,5 +1,6 @@
 import { BattleResult, RankAndPlayer } from './model/BattleResult';
 import { Rank } from './model/Rank';
+import { Player } from './model/Player';
 
 export function getWinner(battle: BattleResult): RankAndPlayer | undefined {
   if (battle.Winner === battle.Attacker.Player) {
@@ -34,4 +35,11 @@ export function weWin(me: Rank, opponent: Rank): boolean {
   }
 
   return rankOrder.indexOf(me) < rankOrder.indexOf(opponent);
+}
+
+export function getOpponentRank(battle: BattleResult, me: Player): Rank {
+  if (battle.Attacker.Player !== me) {
+    return battle.Attacker.Rank;
+  }
+  return battle.Defender.Rank;
 }

@@ -6,14 +6,15 @@ import {
   stringToCoord,
 } from './model/Coordinate';
 import { Cell } from './model/Cell';
+import { Player } from './model/Player';
 
 export function calcFlagLikelihood(
   coordStr: string,
   info: PieceInfo,
   cells: Record<string, Cell>,
-  me: number
+  me: Player
 ): number {
-  if (info.rank || info.hasMoved) {
+  if (info.rank || info.hasMoved || !info.possibleRanks.includes('Flag')) {
     return 0;
   }
 

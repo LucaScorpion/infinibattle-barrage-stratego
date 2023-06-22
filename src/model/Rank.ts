@@ -7,3 +7,7 @@ export type Rank =
   | 'Spy'
   | 'Flag'
   | '?';
+
+export function canMove(r: Rank): boolean {
+  return r !== 'Bomb' && r !== 'Flag';
+}

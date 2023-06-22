@@ -3,12 +3,13 @@ import { Cell } from './model/Cell';
 import { DIRECTIONS } from './directions';
 import { Rank } from './model/Rank';
 import { weWin } from './battleResult';
+import { Player } from './model/Player';
 
 export function findPath(
   from: Coordinate,
   to: Coordinate,
   cells: Record<string, Cell>,
-  me: number,
+  me: Player,
   rank: Rank
 ): Coordinate[] {
   const queue: Coordinate[] = [from];

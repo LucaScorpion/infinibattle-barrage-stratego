@@ -7,4 +7,6 @@ export class PieceInfo {
   public hasMoved = false;
 
   public flagLikelihood = 0;
+
+  public possibleRanks: Rank[] = [];
 }

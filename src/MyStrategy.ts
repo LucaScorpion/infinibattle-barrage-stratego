@@ -16,8 +16,8 @@ import {
 } from './model/Coordinate';
 import { PieceInfo } from './PieceInfo';
 import { distance } from './distance';
-import { Rank } from './model/Rank';
-import { getWinner, weWin } from './battleResult';
+import { canMove, Rank } from './model/Rank';
+import { getOpponentRank, getWinner, weWin } from './battleResult';
 import { setupOne } from './setupOne';
 import {
   BATTLE_LOSE_SCORE,
@@ -33,6 +33,7 @@ import { findPath } from './findPath';
 export class MyStrategy extends Strategy {
   private availablePieces: Rank[] = [];
   private readonly opponentPieceInfo: Record<string, PieceInfo> = {};
+  private readonly defeatedPieces: Rank[] = [];
 
   protected doSetupBoard(init: GameInit): SetupBoardCommand {
     this.availablePieces = init.AvailablePieces;
@@ -58,18 +59,66 @@ export class MyStrategy extends Strategy {
     const cellsByCoord: Record<string, Cell> = {};
     state.Board.forEach((c) => (cellsByCoord[coordToString(c.Coordinate)] = c));
 
-    this.calcFlagLikelihoods(cellsByCoord);
-
     // Get all cells with allied pieces.
     const myCells = state.Board.filter((c) => c.Owner === this.me);
 
+    // Get all known opponent ranks (current and defeated).
+    const knownOpponentRanks = Object.values(this.opponentPieceInfo)
+      .map((i) => i.rank)
+      .filter((r) => !!r);
+    this.defeatedPieces.forEach((r) => knownOpponentRanks.push(r));
+
+    // Get all unknown (leftover) opponent ranks.
+    const unknownOpponentRanks = [...this.availablePieces];
+
+    // For each unknown opponent cell, get the possible ranks.
+    Object.values(this.opponentPieceInfo).forEach((info) => {
+      let options = [...unknownOpponentRanks];
+
+      if (info.hasMoved) {
+        options = options.filter(canMove);
+      }
+
+      // If there is only 1 option, it's simple.
+      if (options.length === 1) {
+        info.rank = options[0];
+      }
+
+      info.possibleRanks = options;
+    });
+
+    // Get all unknown, unmoved opponent pieces.
+    const unknownUnmovedOpponentPieces = Object.values(this.opponentPieceInfo)
+      .filter((i) => !i.hasMoved)
+      .filter((i) => !!i.rank);
+
+    if (unknownUnmovedOpponentPieces.length === 1) {
+      // If there is 1 unknown, unmoved piece left, that must be the flag.
+      unknownUnmovedOpponentPieces[0].rank = 'Flag';
+    } else if (unknownUnmovedOpponentPieces.length === 2) {
+      // If there are 2 unknown, unmoved pieces left, they must be the flag and bomb.
+      unknownUnmovedOpponentPieces[0].possibleRanks = ['Flag', 'Bomb'];
+      unknownUnmovedOpponentPieces[1].possibleRanks = ['Flag', 'Bomb'];
+    }
+
     // TODO: Find known winnable fights, prioritise those.
 
-    // Find the cell most likely to be the flag.
-    const target = Object.entries(this.opponentPieceInfo).sort(
-      (a, b) => b[1].flagLikelihood - a[1].flagLikelihood
-    )[0];
-    const targetCoord = stringToCoord(target[0]);
+    // If we know the flag location, go for it.
+    let target = Object.entries(this.opponentPieceInfo).find(
+      (i) => i[1].rank === 'Flag'
+    );
+    let targetCoord = target ? stringToCoord(target[0]) : undefined;
+
+    if (!target || !targetCoord) {
+      // If we don't know for sure, calculate the flag likelihood for each option.
+      this.calcFlagLikelihoods(cellsByCoord);
+
+      // Find the cell most likely to be the flag.
+      target = Object.entries(this.opponentPieceInfo).sort(
+        (a, b) => b[1].flagLikelihood - a[1].flagLikelihood
+      )[0];
+      targetCoord = stringToCoord(target[0]);
+    }
 
     // TODO: Get right piece to move.
     const movePiece = myCells.find(
@@ -196,12 +245,18 @@ export class MyStrategy extends Strategy {
     }
 
     const winner = getWinner(state.BattleResult);
+    const coordStr = coordToString(state.BattleResult.Position);
 
     // Check if we lost.
     if (winner && winner.Player !== this.me) {
       // Move the opponent piece info.
-      this.opponentPieceInfo[coordToString(state.BattleResult.Position)].rank =
-        winner.Rank;
+      this.opponentPieceInfo[coordStr].rank = winner.Rank;
+    }
+
+    // If the opponent lost a piece, remove it from the info.
+    if (!winner || winner.Player === this.me) {
+      delete this.opponentPieceInfo[coordStr];
+      this.defeatedPieces.push(getOpponentRank(state.BattleResult, this.me));
     }
   }
 
