@@ -21,30 +21,14 @@ export function calcFlagLikelihood(
   const coord = stringToCoord(coordStr);
   let result = 0;
 
-  // Sum the distance to a free (or friendly) cell in each direction.
+  // Check on how many sides the piece is surrounded by opponent pieces, void, or water.
   for (const delta of DIRECTIONS) {
-    let checkCoord = { ...coord };
-    let deltaResult = 0;
+    const checkCoord = addCoordinates(coord, delta);
+    const cell = cells[coordToString(checkCoord)];
 
-    while (true) {
-      checkCoord = addCoordinates(checkCoord, delta);
-      const cell = cells[coordToString(checkCoord)];
-
-      // If we are out of bounds, add 2.
-      if (!cell) {
-        deltaResult += 2;
-        break;
-      }
-
-      // If the cell is not water, is free, or contains our piece, we are done.
-      if (!cell.IsWater && (cell.Owner == null || cell.Owner === me)) {
-        break;
-      }
-
-      deltaResult++;
+    if (!cell || cell.IsWater || (cell.Owner != null && cell.Owner !== me)) {
+      result++;
     }
-
-    result += deltaResult;
   }
 
   return result;
