@@ -25,7 +25,7 @@ export function findPath(
   while (queue.length) {
     const cell = queue.splice(0, 1)[0];
 
-    if (cell.X === to.X && cell.Y === to.Y) {
+    if (coordEquals(cell, to)) {
       break;
     }
 
@@ -71,19 +71,14 @@ export function findPath(
   path.reverse();
 
   // Simplify the path for the scout.
-  // Note that we need to check if the first cell is free.
-  if (
-    rank === 'Scout' &&
-    path.length > 1 &&
-    cells[coordToString(path[0])].Owner == null
-  ) {
+  if (rank === 'Scout' && path.length > 1) {
     const delta = subCoordinates(path[0], from);
 
     let upTo = 0;
     while (upTo < path.length - 1) {
-      // Check if the next cell is free.
-      const nextCell = cells[coordToString(path[upTo + 1])];
-      if (nextCell.Owner != null) {
+      // Check if the current cell is free, i.e. if we can keep moving.
+      const cell = cells[coordToString(path[upTo])];
+      if (cell.Owner != null) {
         break;
       }
 
