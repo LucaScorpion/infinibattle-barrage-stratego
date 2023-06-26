@@ -29,7 +29,8 @@ export class MyStrategy extends Strategy {
   private readonly opponentPieceInfo: Record<string, PieceInfo> = {};
   private readonly defeatedPieces: Rank[] = [];
 
-  private readonly myPieces: Record<string, Rank> = {};
+  // List of coordinates, in the preferred movement order.
+  private myPieces: string[] = [];
 
   protected doSetupBoard(init: GameInit): SetupBoardCommand {
     this.availablePieces = init.AvailablePieces;
@@ -43,9 +44,7 @@ export class MyStrategy extends Strategy {
       );
     }
 
-    setup.Pieces.forEach((p) => {
-      this.myPieces[coordToString(p.Position)] = p.Rank;
-    });
+    this.myPieces = setup.Pieces.map((p) => coordToString(p.Position));
 
     return setup;
   }
@@ -138,28 +137,25 @@ export class MyStrategy extends Strategy {
       targetCoord = stringToCoord(target[0]);
     }
 
-    // TODO: Get right piece to move.
-    const movePiece = myCells.find(
-      (c) => c.Rank !== 'Bomb' && c.Rank !== 'Flag'
-    ) as Cell;
-    const from = movePiece.Coordinate;
+    for (const myPieceCoord of this.myPieces) {
+      const rank = cellsByCoord[myPieceCoord];
+      const from = stringToCoord(myPieceCoord);
 
-    const path = findPath(
-      from,
-      targetCoord,
-      cellsByCoord,
-      this.me,
-      movePiece.Rank as Rank
-    );
-
-    if (path.length === 0) {
-      // TODO: Try the next piece when this happens.
-      throw new Error(
-        `Could not find a path from ${coordToString(from)} to ${target[0]}`
+      const path = findPath(
+        from,
+        targetCoord,
+        cellsByCoord,
+        this.me,
+        rank.Rank as Rank
       );
+
+      if (path.length !== 0) {
+        return { From: from, To: path[0] };
+      }
     }
 
-    return { From: from, To: path[0] };
+    // TODO: Better fallback?
+    return allMoves[0].move;
   }
 
   protected processMoveResult(state: GameState): void {
@@ -243,7 +239,7 @@ export class MyStrategy extends Strategy {
 
     // If we lost, remove it from our pieces.
     if (state.BattleResult.Winner !== this.me) {
-      delete this.myPieces[coordStr];
+      this.myPieces.splice(this.myPieces.indexOf(coordStr), 1);
     }
   }
 
@@ -259,9 +255,9 @@ export class MyStrategy extends Strategy {
       return;
     }
 
-    const from = coordToString(state.LastMove.From);
-    this.myPieces[coordToString(state.LastMove.To)] = this.myPieces[from];
-    delete this.myPieces[from];
+    // Update our piece coordinate.
+    this.myPieces[this.myPieces.indexOf(coordToString(state.LastMove.From))] =
+      coordToString(state.LastMove.To);
   }
 
   private processOpponentLastMove(state: GameState) {
