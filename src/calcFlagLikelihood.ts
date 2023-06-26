@@ -8,6 +8,13 @@ import {
 import { Cell } from './model/Cell';
 import { Player } from './model/Player';
 
+const backRowBonus: Record<number, number> = {
+  0: 2,
+  1: 1,
+  8: 1,
+  9: 2,
+};
+
 export function calcFlagLikelihood(
   coordStr: string,
   info: PieceInfo,
@@ -19,7 +26,7 @@ export function calcFlagLikelihood(
   }
 
   const coord = stringToCoord(coordStr);
-  let result = 0;
+  let result = backRowBonus[coord.Y] ?? 0;
 
   // Check on how many sides the piece is surrounded by opponent pieces, void, or water.
   for (const delta of DIRECTIONS) {
