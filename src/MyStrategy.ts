@@ -29,6 +29,8 @@ export class MyStrategy extends Strategy {
   private readonly opponentPieceInfo: Record<string, PieceInfo> = {};
   private readonly defeatedPieces: Rank[] = [];
 
+  private readonly myPieces: Record<string, Rank> = {};
+
   protected doSetupBoard(init: GameInit): SetupBoardCommand {
     this.availablePieces = init.AvailablePieces;
 
@@ -40,6 +42,10 @@ export class MyStrategy extends Strategy {
         (p): RankAndPosition => ({ ...p, Position: flip(p.Position) })
       );
     }
+
+    setup.Pieces.forEach((p) => {
+      this.myPieces[coordToString(p.Position)] = p.Rank;
+    });
 
     return setup;
   }
@@ -156,8 +162,9 @@ export class MyStrategy extends Strategy {
     return { From: from, To: path[0] };
   }
 
-  protected processOpponentMove(state: GameState): void {
+  protected processMoveResult(state: GameState): void {
     this.setupPieceInfo(state);
+    this.processMyLastMove(state);
     this.processBattleResult(state);
   }
 
@@ -222,7 +229,7 @@ export class MyStrategy extends Strategy {
     const winner = getWinner(state.BattleResult);
     const coordStr = coordToString(state.BattleResult.Position);
 
-    // Check if we lost.
+    // Check if the opponent won.
     if (winner && winner.Player !== this.me) {
       // Move the opponent piece info.
       this.opponentPieceInfo[coordStr].rank = winner.Rank;
@@ -233,6 +240,11 @@ export class MyStrategy extends Strategy {
       delete this.opponentPieceInfo[coordStr];
       this.defeatedPieces.push(getOpponentRank(state.BattleResult, this.me));
     }
+
+    // If we lost, remove it from our pieces.
+    if (state.BattleResult.Winner !== this.me) {
+      delete this.myPieces[coordStr];
+    }
   }
 
   private calcFlagLikelihoods(cells: Record<string, Cell>): void {
@@ -240,6 +252,16 @@ export class MyStrategy extends Strategy {
       ([coord, i]) =>
         (i.flagLikelihood = calcFlagLikelihood(coord, i, cells, this.me))
     );
+  }
+
+  private processMyLastMove(state: GameState) {
+    if (!state.LastMove) {
+      return;
+    }
+
+    const from = coordToString(state.LastMove.From);
+    this.myPieces[coordToString(state.LastMove.To)] = this.myPieces[from];
+    delete this.myPieces[from];
   }
 
   private processOpponentLastMove(state: GameState) {

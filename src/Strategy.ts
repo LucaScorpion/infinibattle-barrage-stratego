@@ -11,7 +11,7 @@ export abstract class Strategy {
 
   protected abstract doMove(state: GameState): MoveCommand;
 
-  protected abstract processOpponentMove(state: GameState): void;
+  protected abstract processMoveResult(state: GameState): void;
 
   public setupBoard(init: GameInit): SetupBoardCommand {
     this.me = init.You;
@@ -26,7 +26,7 @@ export abstract class Strategy {
       }
       return moveResult;
     } else {
-      this.processOpponentMove(state);
+      this.processMoveResult(state);
     }
   }
 }
