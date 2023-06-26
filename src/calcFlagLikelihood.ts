@@ -30,9 +30,9 @@ export function calcFlagLikelihood(
       checkCoord = addCoordinates(checkCoord, delta);
       const cell = cells[coordToString(checkCoord)];
 
-      // If we are out of bounds, return the maximum value.
+      // If we are out of bounds, add 2.
       if (!cell) {
-        deltaResult = 8;
+        deltaResult += 2;
         break;
       }
 
