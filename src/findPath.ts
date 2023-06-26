@@ -1,4 +1,10 @@
-import { addCoordinates, Coordinate, coordToString } from './model/Coordinate';
+import {
+  addCoordinates,
+  coordEquals,
+  Coordinate,
+  coordToString,
+  subCoordinates,
+} from './model/Coordinate';
 import { Cell } from './model/Cell';
 import { DIRECTIONS } from './directions';
 import { Rank } from './model/Rank';
@@ -62,9 +68,38 @@ export function findPath(
     parent = parents[coordToString(path[path.length - 1])];
   }
 
-  // TODO: Cut out longer sections that the scout can cover.
+  path.reverse();
 
-  return path.reverse();
+  // Simplify the path for the scout.
+  // Note that we need to check if the first cell is free.
+  if (
+    rank === 'Scout' &&
+    path.length > 1 &&
+    cells[coordToString(path[0])].Owner == null
+  ) {
+    const delta = subCoordinates(path[0], from);
+
+    let upTo = 0;
+    while (upTo < path.length - 1) {
+      // Check if the next cell is free.
+      const nextCell = cells[coordToString(path[upTo + 1])];
+      if (nextCell.Owner != null) {
+        break;
+      }
+
+      // Check if we keep moving in the same direction.
+      const nextDelta = subCoordinates(path[upTo + 1], path[upTo]);
+      if (!coordEquals(delta, nextDelta)) {
+        break;
+      }
+
+      upTo++;
+    }
+
+    path.splice(0, upTo);
+  }
+
+  return path;
 }
 
 function couldDefeat(friendly: Rank, enemy?: Rank): boolean {
