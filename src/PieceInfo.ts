@@ -20,3 +20,12 @@ export function isGuaranteedWin(me: Rank, opponent: PieceInfo): boolean {
   // Check if all possible outcomes result in us winning.
   return !opponent.possibleRanks.map((r) => weWin(me, r)).includes(false);
 }
+
+export function isGuaranteedLoss(me: Rank, opponent: PieceInfo): boolean {
+  if (opponent.rank) {
+    return !weWin(me, opponent.rank);
+  }
+
+  // Check if all possible outcomes result in us losing.
+  return !opponent.possibleRanks.map((r) => weWin(me, r)).includes(true);
+}

@@ -8,13 +8,14 @@ import {
 import { Cell } from './model/Cell';
 import { DIRECTIONS } from './directions';
 import { Rank } from './model/Rank';
-import { weWin } from './battleResult';
 import { Player } from './model/Player';
+import { isGuaranteedLoss, PieceInfo } from './PieceInfo';
 
 export function findPath(
   from: Coordinate,
   to: Coordinate,
   cells: Record<string, Cell>,
+  opponentPieceInfo: Record<string, PieceInfo>,
   me: Player,
   rank: Rank
 ): Coordinate[] {
@@ -48,9 +49,10 @@ export function findPath(
       }
 
       // Check if the cell has an enemy piece.
-      if (neighborCell.Owner != null) {
+      const neighborPieceInfo = opponentPieceInfo[neighborStr];
+      if (neighborPieceInfo) {
         // Check if we can (potentially) defeat this piece.
-        if (!couldDefeat(rank, neighborCell.Rank)) {
+        if (isGuaranteedLoss(rank, neighborPieceInfo)) {
           continue;
         }
       }
@@ -95,13 +97,4 @@ export function findPath(
   }
 
   return path;
-}
-
-function couldDefeat(friendly: Rank, enemy?: Rank): boolean {
-  // Be optimistic.
-  if (!enemy || enemy === '?') {
-    return true;
-  }
-
-  return weWin(friendly, enemy);
 }

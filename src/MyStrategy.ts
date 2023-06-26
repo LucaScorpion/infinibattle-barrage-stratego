@@ -145,6 +145,7 @@ export class MyStrategy extends Strategy {
         from,
         targetCoord,
         cellsByCoord,
+        this.opponentPieceInfo,
         this.me,
         rank.Rank as Rank
       );
