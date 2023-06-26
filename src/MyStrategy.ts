@@ -155,7 +155,8 @@ export class MyStrategy extends Strategy {
     }
 
     // TODO: Better fallback?
-    return allMoves[0].move;
+    // Just pick a random move...
+    return allMoves[Math.floor(Math.random() * allMoves.length)].move;
   }
 
   protected processMoveResult(state: GameState): void {
