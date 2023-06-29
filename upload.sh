@@ -4,6 +4,9 @@ set -eu
 echo 'Removing old bot.zip'
 rm -f 'bot.zip'
 
+echo 'Removing old build'
+rm -rf 'build'
+
 echo 'Running NPM build'
 npm run build
 
