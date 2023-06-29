@@ -14,7 +14,7 @@ import {
   flip,
   stringToCoord,
 } from './model/Coordinate';
-import { isGuaranteedWin, PieceInfo } from './PieceInfo';
+import { isGuaranteedLoss, isGuaranteedWin, PieceInfo } from './PieceInfo';
 import { distance } from './distance';
 import { canMove, Rank } from './model/Rank';
 import { getOpponentRank, getWinner } from './battleResult';
@@ -31,6 +31,8 @@ export class MyStrategy extends Strategy {
 
   // List of coordinates, in the preferred movement order.
   private myPieces: string[] = [];
+
+  private panicMode = 0;
 
   protected doSetupBoard(init: GameInit): SetupBoardCommand {
     this.availablePieces = init.AvailablePieces;
@@ -53,6 +55,13 @@ export class MyStrategy extends Strategy {
     this.setupPieceInfo(state);
     this.processOpponentLastMove(state);
     this.processBattleResult(state);
+
+    if (state.TurnNumber > 200) {
+      this.panicMode = 1;
+    }
+    if (state.TurnNumber > 400) {
+      this.panicMode = 2;
+    }
 
     // Get a map of all cells by coordinate.
     const cellsByCoord: Record<string, Cell> = {};
@@ -109,7 +118,7 @@ export class MyStrategy extends Strategy {
     const attackMoves = allMoves
       .filter((m) => {
         const opponent = this.opponentPieceInfo[coordToString(m.move.To)];
-        return opponent && isGuaranteedWin(m.rank, opponent);
+        return opponent && this.shouldAttack(m.rank, opponent);
       })
       .sort(
         (a, b) => ATTACK_ORDER.indexOf(a.rank) - ATTACK_ORDER.indexOf(b.rank)
@@ -158,6 +167,17 @@ export class MyStrategy extends Strategy {
     // TODO: Better fallback?
     // Just pick a random move...
     return allMoves[Math.floor(Math.random() * allMoves.length)].move;
+  }
+
+  private shouldAttack(rank: Rank, opponent: PieceInfo): boolean {
+    if (this.panicMode === 1) {
+      return !isGuaranteedLoss(rank, opponent);
+    }
+    if (this.panicMode > 1) {
+      return true;
+    }
+
+    return isGuaranteedWin(rank, opponent);
   }
 
   protected processMoveResult(state: GameState): void {
